@@ -1,7 +1,7 @@
 from mcp.server.fastmcp import FastMCP
 
 # Create an MCP server
-mcp = FastMCP("Hopper KB", json_response=True)
+mcp = FastMCP("Hopper KB", json_response=True, port=8002)
 
 
 # Add an addition tool
