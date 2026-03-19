@@ -1,7 +1,48 @@
 from mcp.server.fastmcp import FastMCP
+from mcp.server.auth.provider import AccessToken, TokenVerifier
+from mcp.server.auth.settings import AuthSettings
+
+from pydantic import AnyHttpUrl
+import os
+
+import jwt
+
+
+class JwtTokenVerifier(TokenVerifier):
+    
+    async def verify_token(self, token: str) -> AccessToken | None:
+        jwks_url = os.environ.get("JWKS_ENDPOINT", "")
+        jwks_client = jwt.PyJWKClient(jwks_url)
+        signing_key = jwks_client.get_signing_key_from_jwt(token)
+        
+        data = jwt.decode(
+            token, 
+            key=signing_key.key, # Simplified
+            algorithms=os.environ.get("JWT_ALGORITHM", "RS256").split(",")
+        )
+        
+        return AccessToken(
+                    token=token,
+                    client_id=data.get("client_id", "unknown"),
+                    scopes=data.get("scope", "").split() if data.get("scope") else [],
+                    expires_at=data.get("exp"),
+                    resource=data.get("aud"),  
+                )
+
 
 # Create an MCP server
-mcp = FastMCP("Hopper KB", json_response=True, host="0.0.0.0", port=8000)
+mcp = FastMCP("Hopper KB", 
+              json_response=True, 
+              host="0.0.0.0", 
+              port=int(os.environ.get("MCP_PORT", 8000)), 
+              token_verifier=JwtTokenVerifier(),
+              auth=AuthSettings(
+                issuer_url=AnyHttpUrl(os.environ.get("ISSUER_URL", "http://localhost:8000/")),  # Authorization Server URL
+                resource_server_url=AnyHttpUrl(os.environ.get("RESOURCE_SERVER_URL", "http://localhost:8002/")),  # This server's URL
+                required_scopes=os.environ.get("REQUIRED_SCOPES","openid").split(";"),
+                )
+            )
+
 
 
 # Add an addition tool

@@ -1,0 +1,9 @@
+# Server config
+export MCP_PORT=8000 # internal docker port
+
+# JWT config
+export ISSUER_URL="http://localhost:8000/" # Server url that provides the tokens
+export RESOURCE_SERVER_URL="http://localhost:8002" # this MCP server
+export JWKS_ENDPOINT="http://host.docker.internal:8000/.well-known/jwks.json"
+export JWT_ALGORITHM="RS256" # comma-separated list
+export REQUIRED_SCOPES="openid" # comma-separated list
