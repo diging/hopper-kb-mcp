@@ -2,8 +2,15 @@ from mcp.server.fastmcp import FastMCP
 from mcp.server.auth.provider import AccessToken, TokenVerifier
 from mcp.server.auth.settings import AuthSettings
 
+from starlette.requests import Request
+from starlette.responses import Response, JSONResponse
+from functools import wraps
+
+import httpx
+from markdownify import markdownify as md
+
 from pydantic import AnyHttpUrl
-import os
+import os, time
 
 import jwt
 
@@ -29,6 +36,24 @@ class JwtTokenVerifier(TokenVerifier):
                     resource=data.get("aud"),  
                 )
 
+def require_api_key(func):
+    @wraps(func)
+    async def wrapper(request, *args, **kwargs):
+        verifier = JwtTokenVerifier()
+
+        token = request.headers.get("Authorization", "")[7:]  # Remove "Bearer " prefix
+        if not token:
+            return JSONResponse({"error": "Forbidden"}, status_code=403)
+        
+        # Validate the token with the verifier
+        auth_info = await verifier.verify_token(token)
+        if not auth_info:
+            return JSONResponse({"error": "Forbidden"}, status_code=403)
+
+        if auth_info.expires_at and auth_info.expires_at < int(time.time()):
+            return JSONResponse({"error": "Forbidden"}, status_code=403)
+        return await func(request, *args, **kwargs)
+    return wrapper
 
 # Create an MCP server
 mcp = FastMCP("Hopper KB", 
@@ -77,6 +102,19 @@ def get_document(id: str) -> str:
         with open('documents/DOC2.html', 'r') as file:
             content = file.read()
     return content
+
+@mcp.custom_route("/website/add", methods=["POST"])
+@require_api_key
+async def add_website(request: Request):
+    url = request.query_params.get("url")
+    try:
+        response = httpx.get(url)
+        content = md(response.content)
+        return Response()
+    except Exception as e:
+        print(e)
+        return Response(status_code=500)
+
 
 
 # Run with streamable HTTP transport
