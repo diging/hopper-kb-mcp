@@ -1,14 +1,17 @@
 version: "3.9"
 
 services:
-  #db:
-  #  image: postgres:16
-  #  platform: linux/amd64
-  #  env_file:
-  #    - .docker-env
-  #  volumes:
-  #    - postgres_data:/var/lib/postgresql/data
-
+  db:
+    image: pgvector/pgvector:pg16 # Uses Postgres 16 with pgvector pre-installed
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: knowledge_base
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
   web:
     build: .
     platform: linux/amd64
@@ -19,8 +22,8 @@ services:
       - .:/usr/src/app
     ports:
       - "8002:8000"
-    #depends_on:
-      #- db
+    depends_on:
+      - db
 
 #volumes:
   #postgres_data:

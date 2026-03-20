@@ -10,3 +10,4 @@ wheels/
 .venv
 
 .app_env
+postgres_data/

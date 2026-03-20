@@ -6,14 +6,13 @@ from starlette.requests import Request
 from starlette.responses import Response, JSONResponse
 from functools import wraps
 
-import httpx
-from markdownify import markdownify as md
-
 from pydantic import AnyHttpUrl
 import os, time
+import httpx
 
 import jwt
 
+import documents
 
 class JwtTokenVerifier(TokenVerifier):
     
@@ -69,8 +68,6 @@ mcp = FastMCP("Hopper KB",
             )
 
 
-
-# Add an addition tool
 @mcp.tool()
 def search(query: str) -> dict:
     """Find relevant documents"""
@@ -108,14 +105,14 @@ def get_document(id: str) -> str:
 async def add_website(request: Request):
     url = request.query_params.get("url")
     try:
-        response = httpx.get(url)
-        content = md(response.content)
-        return Response()
+        documents.add_website(url)
+        return JSONResponse({"message": "Website added successfully."})
+    except httpx.HTTPError as e:
+        print(e)
+        return JSONResponse({"error": "Website could not be accessed."}, status_code=500)
     except Exception as e:
         print(e)
-        return Response(status_code=500)
-
-
+        return JSONResponse({"error": "An error occurred while processing the website."}, status_code=500)
 
 # Run with streamable HTTP transport
 if __name__ == "__main__":

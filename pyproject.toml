@@ -5,10 +5,17 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "fastembed>=0.7.4",
     "httpx>=0.28.1",
     "markdownify>=1.2.2",
     "mcp[cli]>=1.26.0",
+    "pgvector>=0.4.2",
+    "psycopg2>=2.9.11",
+    "psycopg[binary]>=3.3.3",
     "pyjwt>=2.12.1",
     "requests>=2.32.5",
+    "sqlalchemy>=2.0.48",
+    "sqlalchemy-utils>=0.42.1",
     "starlette>=0.52.1",
+    "unstructured[html,md]>=0.21.5",
 ]
