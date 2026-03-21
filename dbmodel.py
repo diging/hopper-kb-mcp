@@ -23,10 +23,10 @@ class Base(DeclarativeBase):
 class Document(Base):
     __tablename__ = "documents"
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    title: Mapped[str] = mapped_column(Text)
+    title: Mapped[str] = mapped_column(String)
     url: Mapped[str] = mapped_column(String, nullable=True)
     local_path: Mapped[str] = mapped_column(String, nullable=True)
-    role: Mapped[str] = mapped_column(ChoiceType(DOCUMENT_TYPES))
+    doc_type: Mapped[str] = mapped_column(String)
 
     chunks: Mapped[List["DocumentChunk"]] = relationship(back_populates="document", cascade="all, delete-orphan")
 
@@ -36,7 +36,7 @@ class DocumentChunk(Base):
     
     order_index: Mapped[int] = mapped_column(Integer)
     content: Mapped[str] = mapped_column(Text)
-    concent_vector = mapped_column(Vector(384))  # dimension depends on the model used
+    content_vector = mapped_column(Vector(384))  # dimension depends on the model used
     metadata_json = mapped_column(JSON)
 
     document_id: Mapped[int] = mapped_column(ForeignKey("documents.id"))

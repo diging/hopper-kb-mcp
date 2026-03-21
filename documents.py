@@ -11,7 +11,7 @@ import dbconnect
 
 from fastembed import TextEmbedding
 
-model = TextEmbedding()
+model = TextEmbedding() # using BAAI/bge-small-en-v1.5
 
 def add_website(url: str):
     """
@@ -39,19 +39,20 @@ def add_website(url: str):
     Notes:
         - Chunks shorter than about 20 characters are skipped.
         - Embeddings are created with ``model.embed`` and stored in
-          ``DocumentChunk.concent_vector``.
+          ``DocumentChunk.content_vector``.
     """
-    response = httpx.get(url)
+    headers = {"User-Agent": "HopperKbBot/1.0.0"}
+    response = httpx.get(url, headers=headers)
     match = re.search(r'<title>(.*?)</title>', response.text, re.IGNORECASE | re.DOTALL)
     title = match.group(1).strip() if match else "No Title Found"
     
     chunks = _calculate_chunks(response.content, url)
     
-    document = Document(title=title, url=url, role=DocumentTypes.WEBSITE.value)
+    document = Document(title=title, url=url, doc_type=DocumentTypes.WEBSITE.value)
     
     for i, chunk in enumerate(chunks):
         embeddings = list(model.embed(chunk["text"]))
-        chunk_record = DocumentChunk(order_index=i, content=chunk["text"], concent_vector=embeddings[0], metadata_json=chunk["metadata"])
+        chunk_record = DocumentChunk(order_index=i, content=chunk["text"], content_vector=embeddings[0], metadata_json=chunk["metadata"])
         document.chunks.append(chunk_record)
 
     dbconnect.add_document(document)
@@ -111,8 +112,7 @@ def _calculate_chunks(content: str, url: str):
         # for some reason these do not get stripped out otherwise
         text_content = chunk.text.replace("\\r", " ").replace("\\t", " ").replace("\\n", " ")
         text_content = clean(text_content, extra_whitespace=True, dashes=True)
-        text_content = list(group_broken_paragraphs(text_content))
-
+        
         # Skip elements that are too short to be meaningful for search
         if len(text_content) < 20:
             continue
@@ -121,7 +121,7 @@ def _calculate_chunks(content: str, url: str):
         # Most vector DBs expect: 'id', 'vector' (added later), and 'metadata'
         chunk_json = {
             "id": f"file-{i}",
-            "text": text_content,  # This is what you will send to your embedding model
+            "text": text_content,  
             "metadata": {
                 "source": url,
                 "type": chunk.category,  # e.g., 'Title', 'NarrativeText', 'ListItem'
