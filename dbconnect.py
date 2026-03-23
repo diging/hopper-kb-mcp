@@ -20,12 +20,18 @@ def add_document(document: Document):
         session.commit()
 
 def search_documents(query_vector: list) -> list[DocumentChunk]:
+
+    # For Cosine Distance: 0.0 is identical, 1.0 is orthogonal (unrelated), 2.0 is opposite.
+    # A common strict threshold is 0.3 to 0.4.
+    DISTANCE_THRESHOLD = 0.4
+
     with Session(engine) as session:
-        # Use l2_distance (Euclidean) or cosine_distance
+        # Use cosine_distance (Cosine Similarity)
         # We order by distance (ascending) and limit to top 5 results
         query_results = session.scalars(select(DocumentChunk)
-            .order_by(DocumentChunk.content_vector.l2_distance(query_vector))
-            .limit(5)).all()
+            .where(DocumentChunk.content_vector.cosine_distance(query_vector) < DISTANCE_THRESHOLD)
+            .order_by(DocumentChunk.content_vector.cosine_distance(query_vector))
+            .limit(6)).all()
         
         results = []
         for chunk in query_results:

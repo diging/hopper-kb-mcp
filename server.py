@@ -73,8 +73,7 @@ def search(query: str) -> dict:
     """Find relevant documents"""
     search_results = searchdocs.search(query)
 
-    for chunk in search_results:
-        print(f"Id: {chunk['id']}")
+    print(f"Found {len(search_results)} relevant chunks for query: '{query}'")  # Debugging output
         
     return {
         "results": search_results
