@@ -1,6 +1,6 @@
 import os
-from sqlalchemy import create_engine, text, select
-from sqlalchemy.orm import Session
+from sqlalchemy import create_engine, text, select, func
+from sqlalchemy.orm import Session, selectinload
 
 from dbmodel import Base, Document, DocumentChunk
 
@@ -47,3 +47,30 @@ def search_documents(query_vector: list) -> list[DocumentChunk]:
         return results
     
     return []
+
+def get_documents(offset, page_size):
+    """
+    This function retrieves documents from the database based on the provided offset and page size.
+     
+    Args:
+        offset (int): The number of documents to skip.
+        page_size (int): The number of documents to include in each page.
+    Returns:
+        list[Document]: A list of documents along with their chunks.
+    """
+    with Session(engine) as session:
+        stmt = (
+            select(Document)
+            .options(selectinload(Document.chunks))
+            .order_by(Document.id) # Consistency is key for pagination
+            .limit(page_size)
+            .offset(offset)
+        )
+        
+        return session.scalars(stmt).all()
+    
+def get_documents_count():
+    """Returns the total count of documents in the database."""
+    with Session(engine) as session:
+        count = session.execute(select(func.count()).select_from(Document)).scalar()
+        return count
