@@ -15,17 +15,25 @@ import jwt
 import documents, searchdocs
 
 class JwtTokenVerifier(TokenVerifier):
-    
+    """
+    This class implements the TokenVerifier interface for JWT tokens. 
+    It retrieves the JWKS from Hopper, verifies the token's signature, and 
+    decodes the token so we can check its validity. 
+    """
     async def verify_token(self, token: str) -> AccessToken | None:
         jwks_url = os.environ.get("JWKS_ENDPOINT", "")
         jwks_client = jwt.PyJWKClient(jwks_url)
         signing_key = jwks_client.get_signing_key_from_jwt(token)
         
-        data = jwt.decode(
-            token, 
-            key=signing_key.key, # Simplified
-            algorithms=os.environ.get("JWT_ALGORITHM", "RS256").split(",")
-        )
+        try:
+            data = jwt.decode(
+                token, 
+                key=signing_key.key, # Simplified
+                algorithms=os.environ.get("JWT_ALGORITHM", "RS256").split(",")
+            )
+        except jwt.PyJWTError as e:
+            print(f"Token verification failed: {e}")
+            return None
         
         return AccessToken(
                     token=token,
@@ -36,6 +44,12 @@ class JwtTokenVerifier(TokenVerifier):
                 )
 
 def require_api_key(func):
+    """"
+    Decorator to require an API key for certain routes. 
+    This is a check for a specific API key in the Authorization header and 
+    makes sure the token is valid.
+    """
+    
     @wraps(func)
     async def wrapper(request, *args, **kwargs):
         verifier = JwtTokenVerifier()
