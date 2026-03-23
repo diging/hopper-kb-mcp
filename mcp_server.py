@@ -1,8 +1,16 @@
 from fastmcp import FastMCP
+from fastmcp.server.auth.providers.jwt import JWTVerifier
 
+import os
 import searchdocs
 
-mcp_server = FastMCP("MCP")
+mcp_server = FastMCP("Hopper KB", 
+        auth = JWTVerifier(
+            jwks_uri=os.environ.get("JWKS_ENDPOINT", ""),
+            issuer=os.environ.get("ISSUER_URL", "http://localhost:8000"),
+            algorithm=os.environ.get("JWT_ALGORITHM", "RS256")
+        )
+    )
 
 @mcp_server.tool()
 def search(query: str) -> dict:
