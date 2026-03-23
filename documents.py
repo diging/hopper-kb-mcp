@@ -56,7 +56,52 @@ def add_website(url: str):
         document.chunks.append(chunk_record)
 
     dbconnect.add_document(document)
+
+def get_documents(page: int = 1, page_size: int = 10):
+    """
+    Retrieve a paginated list of documents from the database.
+    This function calculates the appropriate offset based on the provided page number
+    and page size, then queries the database for that slice of documents. It returns
+    both the total count of documents and the list of documents with their metadata and chunks.
+
+    Args:
+        page (int): The 1-based page number to retrieve (default is 1).
+        page_size (int): The number of documents to include in each page (default is 10).
     
+    Returns:
+        tuple: A tuple containing:
+            - total_count (int): The total number of documents in the database.
+            - documents (list): A list of document dictionaries, each containing:
+                - id (int): The document ID.
+                - title (str): The document title.
+                - url (str): The document URL.
+                - chunks (list): A list of chunk dictionaries, each with:
+                    - order_index (int): The chunk's order index within the document.
+                    - content (str): The text content of the chunk.
+    """
+    
+    # Ensure page is at least 1
+    page = max(1, page)
+    offset_value = (page - 1) * page_size
+
+    documents = dbconnect.get_documents(offset_value, page_size)
+    count = dbconnect.get_documents_count()
+        
+    return (count, [
+        {
+            "id": doc.id,
+            "title": doc.title,
+            "url": doc.url,
+            "chunks": [
+                {
+                    "order_index": c.order_index,
+                    "content": c.content
+                }
+                for c in doc.chunks
+            ]
+        }
+        for doc in documents
+    ])   
 
 def _calculate_chunks(content: str, url: str):
     """Partition raw page content into cleaned, titled chunks ready for embedding.
