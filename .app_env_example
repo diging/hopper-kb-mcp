@@ -1,6 +1,9 @@
 # Server config
 export MCP_PORT=8000 # internal docker port
 
+# Data config
+export DATA_DIR="./data/" # directory to store data, should be mounted as a volume
+
 # JWT config
 export ISSUER_URL="http://localhost:8000/" # Server url that provides the tokens
 export RESOURCE_SERVER_URL="http://localhost:8002" # this MCP server

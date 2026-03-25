@@ -7,4 +7,6 @@ ENV PATH="~/.local/bin/:${PATH}"
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
+RUN apt-get update && apt-get install ffmpeg libsm6 libxext6  -y
+
 ENTRYPOINT ["./docker/startup.sh"]

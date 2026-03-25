@@ -17,5 +17,5 @@ dependencies = [
     "sqlalchemy>=2.0.48",
     "sqlalchemy-utils>=0.42.1",
     "starlette>=0.52.1",
-    "unstructured[html,md]>=0.21.5",
+    "unstructured[html,md,pdf]>=0.21.5",
 ]

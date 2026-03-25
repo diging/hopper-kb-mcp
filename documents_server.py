@@ -2,6 +2,8 @@ from fastmcp import FastMCP
 
 from decorators import require_api_key
 import documents
+import pdf_docs
+import website_docs
 
 from starlette.requests import Request
 from starlette.responses import JSONResponse
@@ -32,7 +34,7 @@ async def add_website(request: Request):
     """
     url = request.query_params.get("url")
     try:
-        documents.add_website(url)
+        website_docs.add_website(url)
         return JSONResponse({"message": "Website added successfully."})
     except httpx.HTTPError as e:
         print(e)
@@ -80,3 +82,31 @@ async def get_documents(request: Request):
     count, results = documents.get_documents(page, page_size)
 
     return JSONResponse({"total": count, "page": page, "page_size": page_size, "documents": results})
+
+@documents_server.custom_route("/pdf/add", methods=["POST"])
+@require_api_key
+async def add_pdf(request: Request):
+    """HTTP endpoint to upload a PDF and add it to the ingestion pipeline.
+
+    Expects a multipart/form-data POST with two fields:
+    - ``file``: the uploaded PDF file
+    - ``title``: the title to associate with the PDF
+
+    The handler reads the uploaded file bytes and calls ``pdf_docs.add_pdf``
+    to perform the actual PDF processing and storage.
+    """
+    form = await request.form()
+    upload = form.get("file")
+    title = form.get("title")
+
+    if upload is None or title is None:
+        return JSONResponse({"error": "Missing 'file' or 'title' in form data."}, status_code=400)
+
+    try:
+        # Upload is a Starlette UploadFile; read bytes and pass to pdf_docs
+        file_bytes = await upload.read()
+        pdf_docs.add_pdf(file_bytes, upload.filename, title)
+        return JSONResponse({"message": "PDF added successfully."})
+    except Exception as e:
+        print(e)
+        return JSONResponse({"error": "An error occurred while processing the PDF."}, status_code=500)
