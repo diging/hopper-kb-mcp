@@ -23,6 +23,12 @@ def search(query: str) -> dict:
         "results": search_results
     }
 
+@mcp_server.tool()
+def datetime() -> str:
+    """Get the current date and time."""
+    from datetime import datetime
+    return datetime.now().isoformat()
+
 
 @mcp_server.resource("hopper://documents/{id}")
 def get_document(id: str) -> str:
