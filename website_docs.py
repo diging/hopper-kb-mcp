@@ -37,6 +37,10 @@ def add_website(url: str):
     title = match.group(1).strip() if match else "No Title Found"
     
     elements = partition_md(text=response.content)
+    existing_doc = documents.get_document_by_url(url)
+    if existing_doc:
+        return documents.update_document(existing_doc, elements, title, documents.DocumentTypes.WEBSITE.value, url)
+    
     return documents.add_document(elements, title, documents.DocumentTypes.WEBSITE.value, url)
     
 

@@ -10,7 +10,7 @@
 
 **Tech stack**: Python, httpx, unstructured (partitioning/cleaning), fastembed (embeddings), Postgres, Docker for local deployment.
 
-**Deployment / quick run**: Start the stack with Docker Compose:
+**Deployment / quick run**: Make sure the folder `postgres_data` exists. Start the stack with Docker Compose:
 
 ```
 docker compose up

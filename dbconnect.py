@@ -15,9 +15,24 @@ with engine.connect() as conn:
 Base.metadata.create_all(engine)
 
 def add_document(document: Document):
-    with Session(engine) as session:
+    with Session(engine, expire_on_commit=False) as session:
         session.add(document)
         session.commit()
+
+def update_document(document: Document):
+    with Session(engine, expire_on_commit=False) as session:
+        session.merge(document)
+        session.commit()
+
+def get_document_by_url(url: str) -> Document | None:
+    with Session(engine, expire_on_commit=False) as session:
+        stmt = (
+            select(Document)
+            .options(selectinload(Document.chunks))
+            .where(Document.url == url)
+        )
+        
+        return session.scalars(stmt).first()
 
 def search_documents(query_vector: list) -> list[DocumentChunk]:
 

@@ -34,8 +34,8 @@ async def add_website(request: Request):
     """
     url = request.query_params.get("url")
     try:
-        website_docs.add_website(url)
-        return JSONResponse({"message": "Website added successfully."})
+        website = website_docs.add_website(url)
+        return JSONResponse(await _create_document_json(website))
     except httpx.HTTPError as e:
         print(e)
         return JSONResponse({"error": "Website could not be accessed."}, status_code=500)
@@ -79,7 +79,13 @@ async def get_documents(request: Request):
         print("Invalid page_size parameter: {page_size}")  # Debugging output
         page_size = 10  # Default to 10 if parsing fails
 
-    count, results = documents.get_documents(page, page_size)
+    try:
+        return_chunks = request.query_params.get("return_chunks", "true").lower() == "true"
+    except Exception as e:
+        print(f"Error parsing return_chunks parameter: {e}")
+        return_chunks = True  # Default to True if parsing fails    
+
+    count, results = documents.get_documents(page, page_size, return_chunks)
 
     return JSONResponse({"total": count, "page": page, "page_size": page_size, "documents": results})
 
@@ -104,9 +110,21 @@ async def add_pdf(request: Request):
 
     try:
         # Upload is a Starlette UploadFile; read bytes and pass to pdf_docs
-        file_bytes = await upload.read()
-        pdf_docs.add_pdf(file_bytes, upload.filename, title)
-        return JSONResponse({"message": "PDF added successfully."})
+        file_bytes = await upload.read()   
+        pdf = pdf_docs.add_pdf(file_bytes, upload.filename, title)
+        return JSONResponse(await _create_document_json(pdf))
     except Exception as e:
         print(e)
         return JSONResponse({"error": "An error occurred while processing the PDF."}, status_code=500)
+    
+
+async def _create_document_json(document):
+    """Helper to convert a Document SQLAlchemy object into a JSON-serializable dict."""
+    return {
+        "doc_id": document.id,
+        "title": document.title,
+        "type": document.doc_type,
+        "created_at": document.created_at.isoformat() if document.created_at else "",
+        "modified_at": document.modified_at.isoformat() if document.modified_at else "",
+        "url": document.url
+    }

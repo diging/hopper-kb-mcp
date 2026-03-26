@@ -1,12 +1,14 @@
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import String, Text, Integer, JSON, ForeignKey
-from sqlalchemy_utils import ChoiceType
-
-from typing import List, Optional
-
-from enum import Enum
+from sqlalchemy import String, Text, Integer, JSON, ForeignKey, DateTime
+from sqlalchemy.sql import func
 
 from pgvector.sqlalchemy import Vector
+
+from typing import List
+from enum import Enum
+import datetime
+
+
 
 DOCUMENT_TYPES = [
     ("WEBSITE", "website"),
@@ -27,6 +29,12 @@ class Document(Base):
     url: Mapped[str] = mapped_column(String, nullable=True)
     local_path: Mapped[str] = mapped_column(String, nullable=True)
     doc_type: Mapped[str] = mapped_column(String)
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True), insert_default=datetime.datetime.now
+    )
+    modified_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True), insert_default=datetime.datetime.now
+    )
 
     chunks: Mapped[List["DocumentChunk"]] = relationship(back_populates="document", cascade="all, delete-orphan")
 
