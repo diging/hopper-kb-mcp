@@ -132,7 +132,7 @@ def _calculate_chunks(elements, url):
 
     return processed_chunks
 
-def get_documents(page: int = 1, page_size: int = 10):
+def get_documents(page: int = 1, page_size: int = 10, return_chunks: bool = True) -> tuple[int, list[Document]]:
     """
     Retrieve a paginated list of documents from the database.
     This function calculates the appropriate offset based on the provided page number
@@ -167,13 +167,16 @@ def get_documents(page: int = 1, page_size: int = 10):
             "id": doc.id,
             "title": doc.title,
             "url": doc.url,
+            "doc_type": doc.doc_type,
+            "created_at": doc.created_at.isoformat() if doc.created_at else "",
+            "modified_at": doc.modified_at.isoformat() if doc.modified_at else "",
             "chunks": [
                 {
                     "order_index": c.order_index,
                     "content": c.content
                 }
                 for c in doc.chunks
-            ]
+            ] if return_chunks else []
         }
         for doc in documents
     ]) 

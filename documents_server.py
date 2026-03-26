@@ -79,7 +79,13 @@ async def get_documents(request: Request):
         print("Invalid page_size parameter: {page_size}")  # Debugging output
         page_size = 10  # Default to 10 if parsing fails
 
-    count, results = documents.get_documents(page, page_size)
+    try:
+        return_chunks = request.query_params.get("return_chunks", "true").lower() == "true"
+    except Exception as e:
+        print(f"Error parsing return_chunks parameter: {e}")
+        return_chunks = True  # Default to True if parsing fails    
+
+    count, results = documents.get_documents(page, page_size, return_chunks)
 
     return JSONResponse({"total": count, "page": page, "page_size": page_size, "documents": results})
 
