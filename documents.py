@@ -1,9 +1,8 @@
 
-import httpx, re
-from markdownify import markdownify as md
+import datetime
 
 
-from unstructured.cleaners.core import clean, group_broken_paragraphs
+from unstructured.cleaners.core import clean
 from unstructured.chunking.title import chunk_by_title
 
 from dbmodel import Document, DocumentChunk, DocumentTypes
@@ -39,63 +38,27 @@ def add_document(elements, title, doc_type, url):
         - Embeddings are created with ``model.embed`` and stored in
           ``DocumentChunk.content_vector``.
     """
-    chunks = _calculate_chunks(elements, url)
     
     document = Document(title=title, url=url, doc_type=doc_type)
+    _create_documentchunks(document, elements, url, title, doc_type)
+
+    dbconnect.add_document(document)
+    return document
+
+def update_document(document: Document, elements, title, doc_type, url):
+    _create_documentchunks(document, elements, url, title, doc_type)
+    document.modified_at = datetime.datetime.now()
+    dbconnect.update_document(document)
+    return document
+
+
+def _create_documentchunks(document, elements, url, title, doc_type):
+    chunks = _calculate_chunks(elements, url)
     
     for i, chunk in enumerate(chunks):
         embeddings = list(model.embed(chunk["text"]))
         chunk_record = DocumentChunk(order_index=i, content=chunk["text"], content_vector=embeddings[0], metadata_json=chunk["metadata"])
         document.chunks.append(chunk_record)
-
-    dbconnect.add_document(document)
-    return document
-
-def get_documents(page: int = 1, page_size: int = 10):
-    """
-    Retrieve a paginated list of documents from the database.
-    This function calculates the appropriate offset based on the provided page number
-    and page size, then queries the database for that slice of documents. It returns
-    both the total count of documents and the list of documents with their metadata and chunks.
-
-    Args:
-        page (int): The 1-based page number to retrieve (default is 1).
-        page_size (int): The number of documents to include in each page (default is 10).
-    
-    Returns:
-        tuple: A tuple containing:
-            - total_count (int): The total number of documents in the database.
-            - documents (list): A list of document dictionaries, each containing:
-                - id (int): The document ID.
-                - title (str): The document title.
-                - url (str): The document URL.
-                - chunks (list): A list of chunk dictionaries, each with:
-                    - order_index (int): The chunk's order index within the document.
-                    - content (str): The text content of the chunk.
-    """
-    
-    # Ensure page is at least 1
-    page = max(1, page)
-    offset_value = (page - 1) * page_size
-
-    documents = dbconnect.get_documents(offset_value, page_size)
-    count = dbconnect.get_documents_count()
-        
-    return (count, [
-        {
-            "id": doc.id,
-            "title": doc.title,
-            "url": doc.url,
-            "chunks": [
-                {
-                    "order_index": c.order_index,
-                    "content": c.content
-                }
-                for c in doc.chunks
-            ]
-        }
-        for doc in documents
-    ])   
 
 def _calculate_chunks(elements, url):
     """Page elements into cleaned, titled chunks ready for embedding.
@@ -168,3 +131,53 @@ def _calculate_chunks(elements, url):
         processed_chunks.append(chunk_json)
 
     return processed_chunks
+
+def get_documents(page: int = 1, page_size: int = 10):
+    """
+    Retrieve a paginated list of documents from the database.
+    This function calculates the appropriate offset based on the provided page number
+    and page size, then queries the database for that slice of documents. It returns
+    both the total count of documents and the list of documents with their metadata and chunks.
+
+    Args:
+        page (int): The 1-based page number to retrieve (default is 1).
+        page_size (int): The number of documents to include in each page (default is 10).
+    
+    Returns:
+        tuple: A tuple containing:
+            - total_count (int): The total number of documents in the database.
+            - documents (list): A list of document dictionaries, each containing:
+                - id (int): The document ID.
+                - title (str): The document title.
+                - url (str): The document URL.
+                - chunks (list): A list of chunk dictionaries, each with:
+                    - order_index (int): The chunk's order index within the document.
+                    - content (str): The text content of the chunk.
+    """
+    
+    # Ensure page is at least 1
+    page = max(1, page)
+    offset_value = (page - 1) * page_size
+
+    documents = dbconnect.get_documents(offset_value, page_size)
+    count = dbconnect.get_documents_count()
+        
+    return (count, [
+        {
+            "id": doc.id,
+            "title": doc.title,
+            "url": doc.url,
+            "chunks": [
+                {
+                    "order_index": c.order_index,
+                    "content": c.content
+                }
+                for c in doc.chunks
+            ]
+        }
+        for doc in documents
+    ]) 
+
+def get_document_by_url(url: str) -> Document | None:
+   return dbconnect.get_document_by_url(url)
+   
