@@ -183,4 +183,8 @@ def get_documents(page: int = 1, page_size: int = 10, return_chunks: bool = True
 
 def get_document_by_url(url: str) -> Document | None:
    return dbconnect.get_document_by_url(url)
+
+def delete_document(document_id: int) -> bool:
+    """Delete a document and all its chunks by ID."""
+    return dbconnect.delete_document(document_id)
    

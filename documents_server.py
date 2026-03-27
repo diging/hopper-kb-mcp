@@ -118,6 +118,30 @@ async def add_pdf(request: Request):
         return JSONResponse({"error": "An error occurred while processing the PDF."}, status_code=500)
     
 
+@documents_server.custom_route("/delete", methods=["DELETE"])
+@require_api_key
+async def delete_document(request: Request):
+    """Delete a document and all its chunks by ID.
+
+    Expects a ``doc_id`` query parameter with the integer document ID.
+    Returns a success message or 404 if the document does not exist.
+    """
+    doc_id = request.query_params.get("doc_id")
+    if doc_id is None:
+        return JSONResponse({"error": "Missing 'doc_id' query parameter."}, status_code=400)
+
+    try:
+        doc_id = int(doc_id)
+    except ValueError:
+        return JSONResponse({"error": "'doc_id' must be an integer."}, status_code=400)
+
+    deleted = documents.delete_document(doc_id)
+    if not deleted:
+        return JSONResponse({"error": "Document not found."}, status_code=404)
+
+    return JSONResponse({"success": True, "doc_id": doc_id})
+
+
 async def _create_document_json(document):
     """Helper to convert a Document SQLAlchemy object into a JSON-serializable dict."""
     return {
