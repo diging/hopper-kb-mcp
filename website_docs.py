@@ -33,14 +33,23 @@ def add_website(url: str):
     """
     headers = {"User-Agent": "HopperKbBot/1.0.0"}
     response = httpx.get(url, headers=headers)
-    match = re.search(r'<title>(.*?)</title>', response.text, re.IGNORECASE | re.DOTALL)
+    if response.status_code != 200:
+        print(f"Fetched {url} with status code {response.status_code}")  
+        response.raise_for_status()
+        
+    return _create_doc(response.content, url)
+    
+def add_html(byesfile: bytes, url: str):
+    return _create_doc(byesfile, url)
+
+def _create_doc(content, url):
+    content_str = content.decode('utf-8')
+    match = re.search(r'<title>(.*?)</title>', content_str, re.IGNORECASE | re.DOTALL)
     title = match.group(1).strip() if match else "No Title Found"
     
-    elements = partition_md(text=response.content)
+    elements = partition_md(text=content)
     existing_doc = documents.get_document_by_url(url)
     if existing_doc:
         return documents.update_document(existing_doc, elements, title, documents.DocumentTypes.WEBSITE.value, url)
     
     return documents.add_document(elements, title, documents.DocumentTypes.WEBSITE.value, url)
-    
-
