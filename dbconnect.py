@@ -89,3 +89,13 @@ def get_documents_count():
     with Session(engine) as session:
         count = session.execute(select(func.count()).select_from(Document)).scalar()
         return count
+
+def delete_document(document_id: int) -> bool:
+    """Delete a document and its chunks by ID. Returns True if found and deleted."""
+    with Session(engine) as session:
+        doc = session.get(Document, document_id)
+        if doc is None:
+            return False
+        session.delete(doc)
+        session.commit()
+        return True
