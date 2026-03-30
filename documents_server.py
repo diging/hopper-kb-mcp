@@ -84,7 +84,7 @@ async def add_website(request: Request):
         return JSONResponse(await _create_document_json(website))
     except httpx.HTTPError as e:
         print(e)
-        return JSONResponse({"error": "Website could not be accessed."}, status_code=500)
+        return JSONResponse({"error": f"Website could not be accessed. Returned status: {e.response.status_code}"}, status_code=500)
     except Exception as e:
         print(e)
         return JSONResponse({"error": "An error occurred while processing the website."}, status_code=500)
@@ -104,6 +104,7 @@ async def add_pdf(request: Request):
     form = await request.form()
     upload = form.get("file")
     title = form.get("title")
+    url = form.get("url")
 
     if upload is None or title is None:
         return JSONResponse({"error": "Missing 'file' or 'title' in form data."}, status_code=400)
@@ -111,8 +112,36 @@ async def add_pdf(request: Request):
     try:
         # Upload is a Starlette UploadFile; read bytes and pass to pdf_docs
         file_bytes = await upload.read()   
-        pdf = pdf_docs.add_pdf(file_bytes, upload.filename, title)
+        pdf = pdf_docs.add_pdf(file_bytes, upload.filename, title, url)
         return JSONResponse(await _create_document_json(pdf))
+    except Exception as e:
+        print(e)
+        return JSONResponse({"error": "An error occurred while processing the PDF."}, status_code=500)
+    
+@documents_server.custom_route("/html/add", methods=["POST"])
+@require_api_key
+async def add_html(request: Request):
+    """HTTP endpoint to upload a PDF and add it to the ingestion pipeline.
+
+    Expects a multipart/form-data POST with two fields:
+    - ``file``: the uploaded PDF file
+    - ``title``: the title to associate with the PDF
+
+    The handler reads the uploaded file bytes and calls ``pdf_docs.add_pdf``
+    to perform the actual PDF processing and storage.
+    """
+    form = await request.form()
+    upload = form.get("file")
+    url = form.get("url")
+
+    if upload is None or url is None:
+        return JSONResponse({"error": "Missing 'file' or 'url' in form data."}, status_code=400)
+
+    try:
+        # Upload is a Starlette UploadFile; read bytes and pass to pdf_docs
+        file_bytes = await upload.read()   
+        doc = website_docs.add_html(file_bytes, url)
+        return JSONResponse(await _create_document_json(doc))
     except Exception as e:
         print(e)
         return JSONResponse({"error": "An error occurred while processing the PDF."}, status_code=500)

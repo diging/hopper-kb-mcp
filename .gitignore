@@ -12,3 +12,4 @@ wheels/
 .app_env
 postgres_data/
 data/
+test.py
