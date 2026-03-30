@@ -12,37 +12,6 @@ import httpx
 
 documents_server = FastMCP("Documents Server")
 
-@documents_server.custom_route("/website/add", methods=["POST"])
-@require_api_key
-async def add_website(request: Request):
-    """HTTP endpoint to add a website into the ingestion pipeline.
-
-    Reads the ``url`` query parameter from the incoming request, delegates the
-    actual fetch/partition/embed/store work to ``documents.add_website``, and
-    returns a JSON response indicating success or failure.
-
-    The route is protected by ``require_api_key`` so callers must present a
-    valid bearer token.
-
-    Args:
-        request (starlette.requests.Request): Incoming HTTP request. The URL to
-            process should be provided as the ``url`` query parameter.
-
-    Returns:
-        starlette.responses.JSONResponse: Success message (HTTP 200) or an
-        error JSON with an appropriate HTTP status code.
-    """
-    url = request.query_params.get("url")
-    try:
-        website = website_docs.add_website(url)
-        return JSONResponse(await _create_document_json(website))
-    except httpx.HTTPError as e:
-        print(e)
-        return JSONResponse({"error": "Website could not be accessed."}, status_code=500)
-    except Exception as e:
-        print(e)
-        return JSONResponse({"error": "An error occurred while processing the website."}, status_code=500)
-
 @documents_server.custom_route("/list", methods=["GET"])
 @require_api_key
 async def get_documents(request: Request):
@@ -89,6 +58,37 @@ async def get_documents(request: Request):
 
     return JSONResponse({"total": count, "page": page, "page_size": page_size, "documents": results})
 
+@documents_server.custom_route("/website/add", methods=["POST"])
+@require_api_key
+async def add_website(request: Request):
+    """HTTP endpoint to add a website into the ingestion pipeline.
+
+    Reads the ``url`` query parameter from the incoming request, delegates the
+    actual fetch/partition/embed/store work to ``documents.add_website``, and
+    returns a JSON response indicating success or failure.
+
+    The route is protected by ``require_api_key`` so callers must present a
+    valid bearer token.
+
+    Args:
+        request (starlette.requests.Request): Incoming HTTP request. The URL to
+            process should be provided as the ``url`` query parameter.
+
+    Returns:
+        starlette.responses.JSONResponse: Success message (HTTP 200) or an
+        error JSON with an appropriate HTTP status code.
+    """
+    url = request.query_params.get("url")
+    try:
+        website = website_docs.add_website(url)
+        return JSONResponse(await _create_document_json(website))
+    except httpx.HTTPError as e:
+        print(e)
+        return JSONResponse({"error": "Website could not be accessed."}, status_code=500)
+    except Exception as e:
+        print(e)
+        return JSONResponse({"error": "An error occurred while processing the website."}, status_code=500)
+
 @documents_server.custom_route("/pdf/add", methods=["POST"])
 @require_api_key
 async def add_pdf(request: Request):
@@ -118,23 +118,19 @@ async def add_pdf(request: Request):
         return JSONResponse({"error": "An error occurred while processing the PDF."}, status_code=500)
     
 
-@documents_server.custom_route("/delete", methods=["DELETE"])
+@documents_server.custom_route("/{doc_id}", methods=["DELETE"])
 @require_api_key
 async def delete_document(request: Request):
     """Delete a document and all its chunks by ID.
 
-    Expects a ``doc_id`` query parameter with the integer document ID.
+    Expects a ``doc_id`` path parameter with the integer document ID.
     Returns a success message or 404 if the document does not exist.
     """
-    doc_id = request.query_params.get("doc_id")
-    if doc_id is None:
-        return JSONResponse({"error": "Missing 'doc_id' query parameter."}, status_code=400)
-
     try:
-        doc_id = int(doc_id)
+        doc_id = int(request.path_params.get("doc_id"))
     except ValueError:
         return JSONResponse({"error": "'doc_id' must be an integer."}, status_code=400)
-
+    
     deleted = documents.delete_document(doc_id)
     if not deleted:
         return JSONResponse({"error": "Document not found."}, status_code=404)
