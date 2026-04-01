@@ -7,7 +7,6 @@ services:
     ports:
       - "${DB_PORT}:5432"
     env_file:
-      - .app_env
       - .docker-env
     volumes:
       - ./postgres_data:/var/lib/postgresql/data
