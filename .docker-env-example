@@ -1,5 +1,4 @@
 DB_PORT=5433
-WEB_PORT=8002
 
 # PostgreSQL settings
 POSTGRES_DB=knowledge_base
