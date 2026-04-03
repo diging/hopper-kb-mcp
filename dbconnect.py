@@ -4,7 +4,8 @@ from sqlalchemy.orm import Session, selectinload
 
 from dbmodel import Base, Document, DocumentChunk
 
-DB_URL = os.environ.get("DATABASE_URL", "postgresql://postgres:postgres@db:5432/knowledge_base")
+DB_URL = os.environ.get(
+    "DATABASE_URL", "postgresql://postgres:postgres@db:5432/knowledge_base")
 engine = create_engine(DB_URL)
 
 with engine.connect() as conn:
@@ -14,15 +15,18 @@ with engine.connect() as conn:
 
 Base.metadata.create_all(engine)
 
+
 def add_document(document: Document):
     with Session(engine, expire_on_commit=False) as session:
         session.add(document)
         session.commit()
 
+
 def update_document(document: Document):
     with Session(engine, expire_on_commit=False) as session:
         session.merge(document)
         session.commit()
+
 
 def get_document_by_url(url: str) -> Document | None:
     with Session(engine, expire_on_commit=False) as session:
@@ -31,8 +35,20 @@ def get_document_by_url(url: str) -> Document | None:
             .options(selectinload(Document.chunks))
             .where(Document.url == url)
         )
-        
+
         return session.scalars(stmt).first()
+
+
+def get_document_by_id(id: int) -> Document | None:
+    with Session(engine, expire_on_commit=False) as session:
+        stmt = (
+            select(Document)
+            .options(selectinload(Document.chunks))
+            .where(Document.id == id)
+        )
+
+        return session.scalars(stmt).first()
+
 
 def search_documents(query_vector: list) -> list[DocumentChunk]:
 
@@ -44,10 +60,10 @@ def search_documents(query_vector: list) -> list[DocumentChunk]:
         # Use cosine_distance (Cosine Similarity)
         # We order by distance (ascending) and limit to top 5 results
         query_results = session.scalars(select(DocumentChunk)
-            .where(DocumentChunk.content_vector.cosine_distance(query_vector) < DISTANCE_THRESHOLD)
-            .order_by(DocumentChunk.content_vector.cosine_distance(query_vector))
-            .limit(6)).all()
-        
+                                        .where(DocumentChunk.content_vector.cosine_distance(query_vector) < DISTANCE_THRESHOLD)
+                                        .order_by(DocumentChunk.content_vector.cosine_distance(query_vector))
+                                        .limit(6)).all()
+
         results = []
         for chunk in query_results:
             results.append({
@@ -58,15 +74,16 @@ def search_documents(query_vector: list) -> list[DocumentChunk]:
                 "document_id": chunk.document_id,
                 "order_index": chunk.order_index,
             })
-        
+
         return results
-    
+
     return []
+
 
 def get_documents(offset, page_size):
     """
     This function retrieves documents from the database based on the provided offset and page size.
-     
+
     Args:
         offset (int): The number of documents to skip.
         page_size (int): The number of documents to include in each page.
@@ -77,18 +94,21 @@ def get_documents(offset, page_size):
         stmt = (
             select(Document)
             .options(selectinload(Document.chunks))
-            .order_by(Document.id) # Consistency is key for pagination
+            .order_by(Document.id)  # Consistency is key for pagination
             .limit(page_size)
             .offset(offset)
         )
-        
+
         return session.scalars(stmt).all()
-    
+
+
 def get_documents_count():
     """Returns the total count of documents in the database."""
     with Session(engine) as session:
-        count = session.execute(select(func.count()).select_from(Document)).scalar()
+        count = session.execute(
+            select(func.count()).select_from(Document)).scalar()
         return count
+
 
 def delete_document(document_id: int) -> bool:
     """Delete a document and its chunks by ID. Returns True if found and deleted."""

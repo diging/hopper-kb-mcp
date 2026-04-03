@@ -4,18 +4,16 @@ import os
 import time
 
 import documents
+import dbconnect
 from dbmodel import Document
 
 
 def get_pdf(title: str):
-
     document_list = documents.get_documents()[1]
-    print(document_list)
 
     for doc in document_list:
-        print(doc)
         if doc['title'] == title and doc['doc_type'] == documents.DocumentTypes.PDF.value:
-            return Document(title=doc['title'], url=doc['url'], doc_type=documents.DocumentTypes.PDF.value, created_at=doc['created_at'], modified_at=doc['modified_at'], chunks=doc['chunks'])
+            return dbconnect.get_document_by_id(doc['id'])
 
     return None
 
@@ -28,10 +26,8 @@ def add_pdf(file: bytes, filename: str, title: str, url: str = None):
     doc = get_pdf(title)
 
     if doc:
-        print("updating")
         return documents.update_document(doc, elements, title, documents.DocumentTypes.PDF.value, url)
 
-    print("adding")
     return documents.add_document(elements, title, documents.DocumentTypes.PDF.value, url)
 
 
