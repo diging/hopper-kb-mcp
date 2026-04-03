@@ -1,11 +1,9 @@
 from unstructured.partition.pdf import partition_pdf
 
-import os
-import time
+import os, time
 
 import documents
 import dbconnect
-from dbmodel import Document
 
 
 def get_pdf(title: str):
@@ -30,7 +28,6 @@ def add_pdf(file: bytes, filename: str, title: str, url: str = None):
 
     return documents.add_document(elements, title, documents.DocumentTypes.PDF.value, url)
 
-
 def _save_file(file: bytes, filename: str) -> str:
     """Helper to save an uploaded file to disk and return the file path."""
 
@@ -53,3 +50,4 @@ def _save_file(file: bytes, filename: str) -> str:
         f.write(file)
 
     return file_path
+
