@@ -7,6 +7,8 @@ from dbmodel import Base, Document, DocumentChunk
 DB_URL = os.environ.get("DATABASE_URL", "postgresql://postgres:postgres@db:5432/knowledge_base")
 engine = create_engine(DB_URL)
 
+NUM_OF_SEARCH_RESULTS = int(os.environ.get("NUM_OF_DB_SEARCH_RESULTS", 20))
+
 with engine.connect() as conn:
     # Enable the extension
     conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
@@ -46,7 +48,7 @@ def search_documents(query_vector: list) -> list[DocumentChunk]:
         query_results = session.scalars(select(DocumentChunk)
             .where(DocumentChunk.content_vector.cosine_distance(query_vector) < DISTANCE_THRESHOLD)
             .order_by(DocumentChunk.content_vector.cosine_distance(query_vector))
-            .limit(6)).all()
+            .limit(NUM_OF_SEARCH_RESULTS)).all()
         
         results = []
         for chunk in query_results:
