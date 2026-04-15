@@ -10,3 +10,6 @@ export RESOURCE_SERVER_URL="http://localhost:8002" # this MCP server
 export JWKS_ENDPOINT="http://host.docker.internal:8000/.well-known/jwks.json"
 export JWT_ALGORITHM="RS256" # comma-separated list
 export REQUIRED_SCOPES="openid" # comma-separated list
+
+# search config
+export NUM_OF_DB_SEARCH_RESULTS=20
