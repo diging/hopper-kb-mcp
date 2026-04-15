@@ -4,8 +4,8 @@ services:
   db:
     image: pgvector/pgvector:pg16 # Uses Postgres 16 with pgvector pre-installed
     restart: always
-    ports:
-      - "${DB_PORT}:5432"
+    # ports:
+    #   - "${DB_PORT}:5432"
     env_file:
       - .docker-env
     volumes:

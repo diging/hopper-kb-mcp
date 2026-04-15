@@ -4,7 +4,12 @@ from sqlalchemy.orm import Session, selectinload
 
 from dbmodel import Base, Document, DocumentChunk
 
-DB_URL = os.environ.get("DATABASE_URL", "postgresql://postgres:postgres@db:5432/knowledge_base")
+POSTGRES_USER = os.environ["POSTGRES_USER"]
+POSTGRES_PASSWORD = os.environ["POSTGRES_PASSWORD"]
+POSTGRES_HOST = os.environ["POSTGRES_HOST"]
+POSTGRES_PORT = os.environ["POSTGRES_PORT"]
+POSTGRES_DB = os.environ["POSTGRES_DB"]
+DB_URL = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
 engine = create_engine(DB_URL)
 
 NUM_OF_SEARCH_RESULTS = int(os.environ.get("NUM_OF_DB_SEARCH_RESULTS", 20))
