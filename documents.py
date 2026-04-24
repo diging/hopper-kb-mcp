@@ -110,6 +110,8 @@ def _calculate_chunks(elements, url):
     for i, chunk in enumerate(chunks):
         # for some reason these do not get stripped out otherwise
         text_content = chunk.text.replace("\\r", " ").replace("\\t", " ").replace("\\n", " ")
+        # clean null character from text, which causes issues with vector DB. 
+        text_content = text_content.replace("\x00", " ")
         text_content = clean(text_content, extra_whitespace=True, dashes=True)
         
         # Skip elements that are too short to be meaningful for search
