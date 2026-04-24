@@ -1,32 +1,24 @@
 from unstructured.partition.pdf import partition_pdf
 
-import os, time
+import os
+import time
 
 import documents
-import dbconnect
 
+def update_pdf(id: int):
+    doc = get_document_by_id(id)
 
-def get_pdf(title: str):
-    document_list = documents.get_documents()[1]
-
-    for doc in document_list:
-        if doc['title'] == title and doc['doc_type'] == documents.DocumentTypes.PDF.value:
-            return dbconnect.get_document_by_id(doc['id'])
-
-    return None
-
+    if doc:
+        return documents.update_document(doc, elements, title, documents.DocumentTypes.PDF.value, url)
 
 def add_pdf(file: bytes, filename: str, title: str, url: str = None):
 
     file_path = _save_file(file, filename)
 
     elements = partition_pdf(filename=f"{file_path}")
-    doc = get_pdf(title)
-
-    if doc:
-        return documents.update_document(doc, elements, title, documents.DocumentTypes.PDF.value, url)
 
     return documents.add_document(elements, title, documents.DocumentTypes.PDF.value, url)
+
 
 def _save_file(file: bytes, filename: str) -> str:
     """Helper to save an uploaded file to disk and return the file path."""
@@ -50,4 +42,3 @@ def _save_file(file: bytes, filename: str) -> str:
         f.write(file)
 
     return file_path
-
