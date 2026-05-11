@@ -41,6 +41,16 @@ def get_document_by_url(url: str) -> Document | None:
         
         return session.scalars(stmt).first()
 
+def get_document_by_id(id: int) -> Document | None:
+    with Session(engine, expire_on_commit=False) as session:
+        stmt = (
+            select(Document)
+            .options(selectinload(Document.chunks))
+            .where(Document.id == id)
+        )
+        
+        return session.scalars(stmt).first()
+
 def search_documents(query_vector: list) -> list[DocumentChunk]:
 
     # For Cosine Distance: 0.0 is identical, 1.0 is orthogonal (unrelated), 2.0 is opposite.

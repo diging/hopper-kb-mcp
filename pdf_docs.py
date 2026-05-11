@@ -1,20 +1,28 @@
 from unstructured.partition.pdf import partition_pdf
 
-import os, time
+import os
+import time
 
 import documents
 
+def update_pdf(id: int):
+    doc = get_document_by_id(id)
 
-def add_pdf(file: bytes, filename: str, title: str, url: str=None):
-    
+    if doc:
+        return documents.update_document(doc, elements, title, documents.DocumentTypes.PDF.value, url)
+
+def add_pdf(file: bytes, filename: str, title: str, url: str = None):
+
     file_path = _save_file(file, filename)
 
     elements = partition_pdf(filename=f"{file_path}")
+
     return documents.add_document(elements, title, documents.DocumentTypes.PDF.value, url)
+
 
 def _save_file(file: bytes, filename: str) -> str:
     """Helper to save an uploaded file to disk and return the file path."""
-    
+
     # for whatever reason, makedirs refused to create the subfolder,
     # so two steps it is.
     data_path = f"{os.environ.get("DATA_DIR", "./data")}"
