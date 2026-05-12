@@ -12,7 +12,7 @@ from fastembed import TextEmbedding
 
 model = TextEmbedding() # using BAAI/bge-small-en-v1.5
 
-def add_document(elements, title, doc_type, url):
+def add_document(elements, title, doc_type, url, metadata=None):
     """
     FCreate document chunks, embed them, and store the document.
 
@@ -23,6 +23,9 @@ def add_document(elements, title, doc_type, url):
 
     Args:
         url (str): The full URL of the website page to index.
+        metadata (dict | None): Arbitrary JSON-serializable metadata to store
+            on the Document row. Kept opaque so the MCP stays document-type
+            agnostic.
 
     Returns:
         None: The function has side effects (saves to the database) and does not
@@ -38,15 +41,17 @@ def add_document(elements, title, doc_type, url):
         - Embeddings are created with ``model.embed`` and stored in
           ``DocumentChunk.content_vector``.
     """
-    
-    document = Document(title=title, url=url, doc_type=doc_type)
+
+    document = Document(title=title, url=url, doc_type=doc_type, metadata_json=metadata)
     _create_documentchunks(document, elements, url, title, doc_type)
 
     dbconnect.add_document(document)
     return document
 
-def update_document(document: Document, elements, title, doc_type, url):
+def update_document(document: Document, elements, title, doc_type, url, metadata=None):
     _create_documentchunks(document, elements, url, title, doc_type)
+    if metadata is not None:
+        document.metadata_json = metadata
     document.modified_at = datetime.datetime.now()
     dbconnect.update_document(document)
     return document

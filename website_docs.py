@@ -3,7 +3,7 @@ import httpx, re
 
 import documents
 
-def add_website(url: str):
+def add_website(url: str, metadata: dict | None = None):
     """
     Fetch a website, create document chunks, embed them, and store the document.
 
@@ -37,19 +37,23 @@ def add_website(url: str):
         print(f"Fetched {url} with status code {response.status_code}")  
         response.raise_for_status()
         
-    return _create_doc(response.content, url)
-    
-def add_html(byesfile: bytes, url: str):
-    return _create_doc(byesfile, url)
+    return _create_doc(response.content, url, metadata=metadata)
 
-def _create_doc(content, url):
+def add_html(byesfile: bytes, url: str, metadata: dict | None = None):
+    return _create_doc(byesfile, url, metadata=metadata)
+
+def _create_doc(content, url, metadata: dict | None = None):
     content_str = content.decode('utf-8')
     match = re.search(r'<title>(.*?)</title>', content_str, re.IGNORECASE | re.DOTALL)
     title = match.group(1).strip() if match else "No Title Found"
-    
+
     elements = partition_md(text=content)
     existing_doc = documents.get_document_by_url(url)
     if existing_doc:
-        return documents.update_document(existing_doc, elements, title, documents.DocumentTypes.WEBSITE.value, url)
-    
-    return documents.add_document(elements, title, documents.DocumentTypes.WEBSITE.value, url)
+        return documents.update_document(
+            existing_doc, elements, title, documents.DocumentTypes.WEBSITE.value, url, metadata=metadata,
+        )
+
+    return documents.add_document(
+        elements, title, documents.DocumentTypes.WEBSITE.value, url, metadata=metadata,
+    )

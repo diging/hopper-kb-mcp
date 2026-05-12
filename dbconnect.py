@@ -21,6 +21,11 @@ with engine.connect() as conn:
 
 Base.metadata.create_all(engine)
 
+# apply column additions idempotently
+with engine.connect() as conn:
+    conn.execute(text("ALTER TABLE documents ADD COLUMN IF NOT EXISTS metadata_json JSONB"))
+    conn.commit()
+
 def add_document(document: Document):
     with Session(engine, expire_on_commit=False) as session:
         session.add(document)

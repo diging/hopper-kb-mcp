@@ -11,13 +11,13 @@ def update_pdf(id: int):
     if doc:
         return documents.update_document(doc, elements, title, documents.DocumentTypes.PDF.value, url)
 
-def add_pdf(file: bytes, filename: str, title: str, url: str = None):
+def add_pdf(file: bytes, filename: str, title: str, url: str = None, metadata: dict | None = None):
 
     file_path = _save_file(file, filename)
 
     elements = partition_pdf(filename=f"{file_path}")
 
-    return documents.add_document(elements, title, documents.DocumentTypes.PDF.value, url)
+    return documents.add_document(elements, title, documents.DocumentTypes.PDF.value, url, metadata=metadata)
 
 
 def _save_file(file: bytes, filename: str) -> str:
