@@ -81,13 +81,12 @@ async def add_website(request: Request):
     """
     url = request.query_params.get("url")
     metadata = None
-    if request.headers.get("content-type", "").startswith("application/json"):
-        try:
-            body = await request.json()
-            if isinstance(body, dict):
-                metadata = body.get("metadata")
-        except json.JSONDecodeError:
-            metadata = None
+    try:
+        body = await request.json()
+        if isinstance(body, dict):
+            metadata = body.get("metadata")
+    except json.JSONDecodeError:
+        pass
     try:
         website = website_docs.add_website(url, metadata=metadata)
         return JSONResponse(await _create_document_json(website))
