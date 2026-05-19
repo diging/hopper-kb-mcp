@@ -81,12 +81,16 @@ async def add_website(request: Request):
     """
     url = request.query_params.get("url")
     metadata = None
-    try:
-        body = await request.json()
+    raw_body = await request.body()
+    if raw_body.strip():
+        try:
+            body = json.loads(raw_body)
+        except json.JSONDecodeError as e:
+            return JSONResponse(
+                {"error": f"Invalid JSON body: {e.msg}"}, status_code=400
+            )
         if isinstance(body, dict):
             metadata = body.get("metadata")
-    except json.JSONDecodeError:
-        pass
     try:
         website = website_docs.add_website(url, metadata=metadata)
         return JSONResponse(await _create_document_json(website))
@@ -148,14 +152,21 @@ async def add_html(request: Request):
     form = await request.form()
     upload = form.get("file")
     url = form.get("url")
+    metadata_raw = form.get("metadata")
+    metadata = None
+    if metadata_raw:
+        try:
+            metadata = json.loads(metadata_raw)
+        except json.JSONDecodeError:
+            return JSONResponse({"error": "'metadata' must be valid JSON."}, status_code=400)
 
     if upload is None or url is None:
         return JSONResponse({"error": "Missing 'file' or 'url' in form data."}, status_code=400)
 
     try:
         # Upload is a Starlette UploadFile; read bytes and pass to pdf_docs
-        file_bytes = await upload.read()   
-        doc = website_docs.add_html(file_bytes, url)
+        file_bytes = await upload.read()
+        doc = website_docs.add_html(file_bytes, url, metadata=metadata)
         return JSONResponse(await _create_document_json(doc))
     except Exception as e:
         print(e)
