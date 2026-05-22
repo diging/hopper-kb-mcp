@@ -29,6 +29,7 @@ class Document(Base):
     url: Mapped[str] = mapped_column(String, nullable=True)
     local_path: Mapped[str] = mapped_column(String, nullable=True)
     doc_type: Mapped[str] = mapped_column(String)
+    metadata_json = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), insert_default=datetime.datetime.now
     )
