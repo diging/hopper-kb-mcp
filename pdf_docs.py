@@ -17,7 +17,7 @@ def add_pdf(file: bytes, filename: str, title: str, url: str = None, metadata: d
 
     elements = partition_pdf(filename=f"{file_path}")
 
-    return documents.add_document(elements, title, documents.DocumentTypes.PDF.value, url, metadata=metadata)
+    return documents.add_document(elements, title, documents.DocumentTypes.PDF.value, url, metadata=metadata, local_path=file_path)
 
 
 def _save_file(file: bytes, filename: str) -> str:

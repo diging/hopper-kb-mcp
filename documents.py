@@ -12,7 +12,7 @@ from fastembed import TextEmbedding
 
 model = TextEmbedding() # using BAAI/bge-small-en-v1.5
 
-def add_document(elements, title, doc_type, url, metadata=None):
+def add_document(elements, title, doc_type, url, metadata=None, local_path=None):
     """
     FCreate document chunks, embed them, and store the document.
 
@@ -42,7 +42,7 @@ def add_document(elements, title, doc_type, url, metadata=None):
           ``DocumentChunk.content_vector``.
     """
 
-    document = Document(title=title, url=url, doc_type=doc_type, metadata_json=metadata)
+    document = Document(title=title, url=url, doc_type=doc_type, metadata_json=metadata, local_path=local_path)
     _create_documentchunks(document, elements, url, title, doc_type)
 
     dbconnect.add_document(document)
