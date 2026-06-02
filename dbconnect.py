@@ -113,11 +113,24 @@ def get_documents_count():
         return count
 
 def delete_document(document_id: int) -> bool:
-    """Delete a document and its chunks by ID. Returns True if found and deleted."""
+    """Delete a document and its chunks by ID. Returns True if found and deleted.
+
+    Also removes the original file from disk when local_path is set. A
+    failed file removal does not roll back the DB delete — the row is
+    gone either way; we just log so the disk leak is recoverable.
+    """
     with Session(engine) as session:
         doc = session.get(Document, document_id)
         if doc is None:
             return False
+        local_path = doc.local_path
         session.delete(doc)
         session.commit()
-        return True
+
+    if local_path and os.path.exists(local_path):
+        try:
+            os.remove(local_path)
+        except OSError as e:
+            print(f"Failed to remove file {local_path} for doc {document_id}: {e}")
+
+    return True
