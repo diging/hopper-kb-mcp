@@ -6,10 +6,13 @@ import pdf_docs
 import website_docs
 
 from starlette.requests import Request
-from starlette.responses import JSONResponse
+from starlette.responses import JSONResponse, FileResponse
 
 import httpx
 import json
+import os
+
+import dbconnect
 
 documents_server = FastMCP("Documents Server")
 
@@ -172,6 +175,36 @@ async def add_html(request: Request):
         print(e)
         return JSONResponse({"error": "An error occurred while processing the PDF."}, status_code=500)
     
+
+@documents_server.custom_route("/{doc_id}/file", methods=["GET"])
+@require_api_key
+async def get_document_file(request: Request):
+    """Stream the original file bytes for a stored document.
+
+    Returns the file at ``Document.local_path`` when the document is a PDF
+    and the file is present on disk. Returns 404 with ``file_unavailable``
+    when the document exists but no local file can be served (e.g. legacy
+    rows ingested before ``local_path`` was recorded) — callers use this
+    to fall back to a tracking-only record.
+    """
+    try:
+        doc_id = int(request.path_params.get("doc_id"))
+    except (TypeError, ValueError):
+        return JSONResponse({"error": "'doc_id' must be an integer."}, status_code=400)
+
+    doc = dbconnect.get_document_by_id(doc_id)
+    if doc is None:
+        return JSONResponse({"error": "Document not found."}, status_code=404)
+
+    if doc.doc_type != "pdf" or not doc.local_path or not os.path.exists(doc.local_path):
+        return JSONResponse({"error": "file_unavailable"}, status_code=404)
+
+    return FileResponse(
+        doc.local_path,
+        media_type="application/pdf",
+        filename=os.path.basename(doc.local_path),
+    )
+
 
 @documents_server.custom_route("/{doc_id}", methods=["DELETE"])
 @require_api_key
