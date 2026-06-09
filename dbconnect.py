@@ -132,5 +132,6 @@ def delete_document(document_id: int) -> bool:
             os.remove(local_path)
         except OSError as e:
             print(f"Failed to remove file {local_path} for doc {document_id}: {e}")
+            return False
 
     return True
