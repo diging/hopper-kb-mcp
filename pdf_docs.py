@@ -5,19 +5,24 @@ import time
 
 import documents
 
-def update_pdf(id: int):
-    doc = get_document_by_id(id)
-
-    if doc:
-        return documents.update_document(doc, elements, title, documents.DocumentTypes.PDF.value, url)
-
 def add_pdf(file: bytes, filename: str, title: str, url: str = None, metadata: dict | None = None):
 
     file_path = _save_file(file, filename)
 
     elements = partition_pdf(filename=f"{file_path}")
 
-    return documents.add_document(elements, title, documents.DocumentTypes.PDF.value, url, metadata=metadata, local_path=file_path)
+    existing_doc = documents.get_document_by_title_and_type(
+        title, documents.DocumentTypes.PDF.value
+    )
+    if existing_doc:
+        existing_doc.local_path = file_path
+        return documents.update_document(
+            existing_doc, elements, title, documents.DocumentTypes.PDF.value, url, metadata=metadata,
+        )
+
+    return documents.add_document(
+        elements, title, documents.DocumentTypes.PDF.value, url, metadata=metadata, local_path=file_path,
+    )
 
 
 def _save_file(file: bytes, filename: str) -> str:
