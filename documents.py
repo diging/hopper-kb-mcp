@@ -49,9 +49,9 @@ def add_document(elements, title, doc_type, url, metadata=None, local_path=None)
     return document
 
 def update_document(document: Document, elements, title, doc_type, url, metadata=None):
-    # Drop the previously-loaded chunks from the detached parent so only the
-    # freshly-built transient chunks are merged. The old rows are deleted in
-    # dbconnect.update_document; keeping them here would make merge fight the delete.
+    # drop the previously-loaded chunks from the detached parent so only the
+    # freshly built chunks are merged. The old rows are deleted in
+    # dbconnect.update_document.
     document.chunks = []
     _create_documentchunks(document, elements, url, title, doc_type)
     document.title = title
