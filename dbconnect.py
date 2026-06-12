@@ -53,18 +53,6 @@ def get_document_by_url(url: str) -> Document | None:
         
         return session.scalars(stmt).first()
 
-def get_document_by_title_and_type(title: str, doc_type: str) -> Document | None:
-    with Session(engine, expire_on_commit=False) as session:
-        stmt = (
-            select(Document)
-            .options(selectinload(Document.chunks))
-            .where(Document.title == title)
-            .where(Document.doc_type == doc_type)
-            .order_by(Document.id)
-        )
-
-        return session.scalars(stmt).first()
-
 def get_document_by_id(id: int) -> Document | None:
     with Session(engine, expire_on_commit=False) as session:
         stmt = (
