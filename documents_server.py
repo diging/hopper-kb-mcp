@@ -139,7 +139,51 @@ async def add_pdf(request: Request):
     except Exception as e:
         print(e)
         return JSONResponse({"error": "An error occurred while processing the PDF."}, status_code=500)
-    
+
+
+@documents_server.custom_route("/pdf/update", methods=["POST"])
+@require_api_key
+async def update_pdf(request: Request):
+    """HTTP endpoint to update an existing PDF document by id.
+
+    Expects a multipart/form-data POST with:
+    - ``doc_id``: the id of the document to update
+    - ``file``: the replacement PDF file
+    - ``title``: the title to associate with the PDF
+
+    Replaces the document's chunks (and original file) in place.
+    """
+    form = await request.form()
+    doc_id_raw = form.get("doc_id")
+    upload = form.get("file")
+    title = form.get("title")
+    url = form.get("url")
+    metadata_raw = form.get("metadata")
+    metadata = None
+    if metadata_raw:
+        try:
+            metadata = json.loads(metadata_raw)
+        except json.JSONDecodeError:
+            return JSONResponse({"error": "'metadata' must be valid JSON."}, status_code=400)
+
+    if upload is None or title is None or doc_id_raw is None:
+        return JSONResponse({"error": "Missing 'doc_id', 'file', or 'title' in form data."}, status_code=400)
+
+    try:
+        doc_id = int(doc_id_raw)
+    except (TypeError, ValueError):
+        return JSONResponse({"error": "'doc_id' must be an integer."}, status_code=400)
+
+    try:
+        file_bytes = await upload.read()
+        pdf = pdf_docs.update_pdf(doc_id, file_bytes, upload.filename, title, url, metadata=metadata)
+        if pdf is None:
+            return JSONResponse({"error": "Document not found."}, status_code=404)
+        return JSONResponse(await _create_document_json(pdf))
+    except Exception as e:
+        print(e)
+        return JSONResponse({"error": "An error occurred while processing the PDF."}, status_code=500)
+
 @documents_server.custom_route("/html/add", methods=["POST"])
 @require_api_key
 async def add_html(request: Request):

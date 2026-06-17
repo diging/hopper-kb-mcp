@@ -33,8 +33,15 @@ def add_document(document: Document):
 
 def update_document(document: Document):
     with Session(engine, expire_on_commit=False) as session:
-        session.merge(document)
+        # Re-ingesting a document must REPLACE chunks.
+        #  Delete all existing chunks for this document first, 
+        # then merge the parent (which inserts the new ones)
+        session.query(DocumentChunk).filter(
+            DocumentChunk.document_id == document.id
+        ).delete(synchronize_session=False)
+        merged = session.merge(document)
         session.commit()
+        return merged
 
 def get_document_by_url(url: str) -> Document | None:
     with Session(engine, expire_on_commit=False) as session:

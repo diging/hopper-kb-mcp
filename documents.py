@@ -49,12 +49,18 @@ def add_document(elements, title, doc_type, url, metadata=None, local_path=None)
     return document
 
 def update_document(document: Document, elements, title, doc_type, url, metadata=None):
+    # drop the previously-loaded chunks from the detached parent so only the
+    # freshly built chunks are merged. The old rows are deleted in
+    # dbconnect.update_document.
+    document.chunks = []
     _create_documentchunks(document, elements, url, title, doc_type)
+    document.title = title
+    document.doc_type = doc_type
+    document.url = url
     if metadata is not None:
         document.metadata_json = metadata
     document.modified_at = datetime.datetime.now()
-    dbconnect.update_document(document)
-    return document
+    return dbconnect.update_document(document)
 
 
 def _create_documentchunks(document, elements, url, title, doc_type):
@@ -190,6 +196,9 @@ def get_documents(page: int = 1, page_size: int = 10, return_chunks: bool = True
 
 def get_document_by_url(url: str) -> Document | None:
    return dbconnect.get_document_by_url(url)
+
+def get_document_by_id(id: int) -> Document | None:
+   return dbconnect.get_document_by_id(id)
 
 def delete_document(document_id: int) -> bool:
     """Delete a document and all its chunks by ID."""

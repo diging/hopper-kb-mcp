@@ -5,19 +5,33 @@ import time
 
 import documents
 
-def update_pdf(id: int):
-    doc = get_document_by_id(id)
-
-    if doc:
-        return documents.update_document(doc, elements, title, documents.DocumentTypes.PDF.value, url)
-
 def add_pdf(file: bytes, filename: str, title: str, url: str = None, metadata: dict | None = None):
 
     file_path = _save_file(file, filename)
 
     elements = partition_pdf(filename=f"{file_path}")
 
-    return documents.add_document(elements, title, documents.DocumentTypes.PDF.value, url, metadata=metadata, local_path=file_path)
+    return documents.add_document(
+        elements, title, documents.DocumentTypes.PDF.value, url, metadata=metadata, local_path=file_path,
+    )
+
+
+def update_pdf(doc_id: int, file: bytes, filename: str, title: str, url: str = None, metadata: dict | None = None):
+    """Update an existing PDF document by id: re-partition the new file and
+    replace its chunks in place. Returns None if no document has that id."""
+
+    existing_doc = documents.get_document_by_id(doc_id)
+    if existing_doc is None:
+        return None
+
+    file_path = _save_file(file, filename)
+
+    elements = partition_pdf(filename=f"{file_path}")
+
+    existing_doc.local_path = file_path
+    return documents.update_document(
+        existing_doc, elements, title, documents.DocumentTypes.PDF.value, url, metadata=metadata,
+    )
 
 
 def _save_file(file: bytes, filename: str) -> str:
