@@ -187,7 +187,8 @@ def get_documents(page: int = 1, page_size: int = 10, return_chunks: bool = True
             "chunks": [
                 {
                     "order_index": c.order_index,
-                    "content": c.content
+                    "content": c.content,
+                    "metadata": c.metadata_json
                 }
                 for c in doc.chunks
             ] if return_chunks else []
