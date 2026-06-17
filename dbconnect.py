@@ -63,7 +63,7 @@ def get_document_by_id(id: int) -> Document | None:
         
         return session.scalars(stmt).first()
 
-def search_documents(query_vector: list) -> list[DocumentChunk]:
+def search_documents(query_vector: list, document_id: int = None) -> list[DocumentChunk]:
 
     # For Cosine Distance: 0.0 is identical, 1.0 is orthogonal (unrelated), 2.0 is opposite.
     # A common strict threshold is 0.3 to 0.4.
@@ -72,10 +72,17 @@ def search_documents(query_vector: list) -> list[DocumentChunk]:
     with Session(engine) as session:
         # Use cosine_distance (Cosine Similarity)
         # We order by distance (ascending) and limit to top 5 results
-        query_results = session.scalars(select(DocumentChunk)
+        if document_id:
+            query_results = session.scalars(select(DocumentChunk)
             .where(DocumentChunk.content_vector.cosine_distance(query_vector) < DISTANCE_THRESHOLD)
+            .where(DocumentChunk.document_id == document_id)
             .order_by(DocumentChunk.content_vector.cosine_distance(query_vector))
             .limit(NUM_OF_SEARCH_RESULTS)).all()
+        else:
+            query_results = session.scalars(select(DocumentChunk)
+                .where(DocumentChunk.content_vector.cosine_distance(query_vector) < DISTANCE_THRESHOLD)
+                .order_by(DocumentChunk.content_vector.cosine_distance(query_vector))
+                .limit(NUM_OF_SEARCH_RESULTS)).all()
         
         results = []
         for chunk in query_results:
@@ -86,6 +93,7 @@ def search_documents(query_vector: list) -> list[DocumentChunk]:
                 "id": f"{chunk.document.id}-{chunk.order_index}",
                 "document_id": chunk.document_id,
                 "order_index": chunk.order_index,
+                "metadata": chunk.metadata_json
             })
         
         return results
