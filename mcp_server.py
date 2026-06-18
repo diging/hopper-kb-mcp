@@ -1,3 +1,4 @@
+import documents
 from fastmcp import FastMCP
 from fastmcp.server.auth.providers.jwt import JWTVerifier
 
@@ -28,6 +29,15 @@ def datetime() -> str:
     """Get the current date and time."""
     from datetime import datetime
     return datetime.now().isoformat()
+
+@mcp_server.tool()
+def get_document_chunks(id: int, query: str) -> dict:
+    """Get the chunks of a document."""
+    results = searchdocs.search(query=query, document_id=id)
+    
+    return {
+        "results": results
+    }
 
 
 @mcp_server.resource("hopper://documents/{id}")
