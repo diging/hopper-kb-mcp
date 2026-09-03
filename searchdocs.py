@@ -8,7 +8,7 @@ import dbconnect
 
 model = TextEmbedding() # using BAAI/bge-small-en-v1.5
 
-def search(query: str) -> dict:
+def search(query: str, document_id: int = None) -> dict:
     """
     Search for relevant document chunks based on a query.
 
@@ -29,6 +29,6 @@ def search(query: str) -> dict:
             operations so callers can handle or log them as needed.
     """
     query_embedding = list(model.embed(query))[0]
-    results = dbconnect.search_documents(query_embedding);
+    results = dbconnect.search_documents(query_embedding, document_id)
     
     return results
