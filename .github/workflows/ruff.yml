@@ -1,0 +1,16 @@
+name: Ruff
+
+on: [pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install uv
+      uses: astral-sh/setup-uv@v7
+    - name: Set up Python
+      run: uv python install
+    - name: Run ruff
+      run: |
+        uvx ruff check
