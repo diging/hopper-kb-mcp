@@ -18,6 +18,10 @@ docker compose up
 
 **Who it's for**: Useful as a lightweight knowledge‑base ingestion pipeline for building vector search or RAG systems.
 
+## Documentation
+
+See [DOCUMENTATION.md](DOCUMENTATION.md) for the architecture, data model, workflows, authentication and configuration.
+
 ## API
 
 See [ENDPOINTS.md](ENDPOINTS.md)
